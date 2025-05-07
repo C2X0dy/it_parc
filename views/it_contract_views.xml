@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue principale du formulaire de contrat -->
+    <record id="view_it_service_contract_form" model="ir.ui.view">
+        <field name="name">it.service.contract.form</field>
+        <field name="model">it.service.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contrat de service">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="client_id"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group>
+                            <field name="billing_frequency"/>
+                            <field name="next_invoice_date"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_amount" widget="monetary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lignes de contrat">
+                            <field name="contract_line_ids">
+                                <tree string="Lignes de contrat" editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="subtotal"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue pour la liste des contrats -->
+    <record id="view_it_service_contract_tree" model="ir.ui.view">
+        <field name="name">it.service.contract.tree</field>
+        <field name="model">it.service.contract</field>
+        <field name="arch" type="xml">
+            <tree string="Contrats de service">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="state"/>
+                <field name="total_amount" sum="Total"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action pour le menu -->
+    <record id="action_it_service_contract" model="ir.actions.act_window">
+        <field name="name">Contrats de service</field>
+        <field name="res_model">it.service.contract</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_it_service_contract"
+              name="Contrats de service"
+              action="action_it_service_contract"
+              parent="menu_it_asset_management"
+              sequence="20"/>
+</odoo>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Catégorie pour les règles du parc informatique -->
+        <record id="module_category_it_asset_management" model="ir.module.category">
+            <field name="name">Gestion de parc informatique</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Groupe utilisateur -->
+        <record id="group_it_user" model="res.groups">
+            <field name="name">Utilisateur</field>
+            <field name="category_id" ref="module_category_it_asset_management"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Groupe responsable -->
+        <record id="group_it_manager" model="res.groups">
+            <field name="name">Responsable</field>
+            <field name="category_id" ref="module_category_it_asset_management"/>
+            <field name="implied_ids" eval="[(4, ref('group_it_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Groupe technicien -->
+        <record id="group_it_technician" model="res.groups">
+            <field name="name">Technicien</field>
+            <field name="category_id" ref="module_category_it_asset_management"/>
+            <field name="implied_ids" eval="[(4, ref('group_it_user'))]"/>
+        </record>
+    </data>
+
+    <!-- Règles de sécurité par enregistrement -->
+    <data noupdate="1">
+        <!-- Les utilisateurs voient leurs propres données -->
+        <record id="it_asset_comp_rule" model="ir.rule">
+            <field name="name">IT Assets: rule</field>
+            <field name="model_id" ref="model_it_asset"/>
+            <field name="domain_force">[(1,'=',1)]</field> <!-- Always true -->
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_my_home_it_equipment" name="IT Equipment" inherit_id="portal.portal_my_home" priority="30">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-if="equipment_count" t-call="portal.portal_docs_entry">
+                <t t-set="title">Équipements</t>
+                <t t-set="url" t-value="'/my/equipment'"/>
+                <t t-set="count" t-value="equipment_count"/>
+            </t>
+            <t t-if="incident_count" t-call="portal.portal_docs_entry">
+                <t t-set="title">Incidents</t>
+                <t t-set="url" t-value="'/my/incidents'"/>
+                <t t-set="count" t-value="incident_count"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

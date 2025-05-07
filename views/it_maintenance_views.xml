@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_it_maintenance_form" model="ir.ui.view">
+        <field name="name">it.maintenance.form</field>
+        <field name="model">it.maintenance</field>
+        <field name="arch" type="xml">
+            <form string="Maintenance">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="planned,in_progress,done,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Référence"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="asset_id"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="cost"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Détails de la maintenance..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_it_maintenance_tree" model="ir.ui.view">
+        <field name="name">it.maintenance.tree</field>
+        <field name="model">it.maintenance</field>
+        <field name="arch" type="xml">
+            <tree string="Maintenances">
+                <field name="name"/>
+                <field name="asset_id"/>
+                <field name="date"/>
+                <field name="cost"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_it_maintenance_search" model="ir.ui.view">
+        <field name="name">it.maintenance.search</field>
+        <field name="model">it.maintenance</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une maintenance">
+                <field name="name"/>
+                <field name="asset_id"/>
+                <separator/>
+                <filter string="Planifiée" name="planned" domain="[('state', '=', 'planned')]"/>
+                <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Terminée" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Annulée" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Actif" name="asset" context="{'group_by': 'asset_id'}"/>
+                    <filter string="État" name="state" context="{'group_by': 'state'}"/>
+                    <filter string="Date" name="date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_it_maintenance" model="ir.actions.act_window">
+        <field name="name">Maintenances</field>
+        <field name="res_model">it.maintenance</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_it_maintenance"
+              name="Maintenances"
+              action="action_it_maintenance"
+              parent="menu_it_asset_management"
+              sequence="30"/>
+</odoo>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Principal -->
+    <menuitem id="menu_it_root" name="Parc Informatique" sequence="10"/>
+    
+    <!-- 1. Parc Informatique -->
+    <menuitem id="menu_it_equipment_main" name="Parc Informatique" parent="menu_it_root" sequence="10"/>
+    <menuitem id="menu_it_assets" name="Parc Matériel &amp; Logiciel" parent="menu_it_equipment_main" action="action_it_asset" sequence="10"/>
+    <menuitem id="menu_it_licenses" name="Licences" parent="menu_it_equipment_main" action="action_it_license" sequence="20"/>
+    <menuitem id="menu_it_assignments" name="Affectations" parent="menu_it_equipment_main" action="action_it_equipment_assignment" sequence="30"/>
+    <menuitem id="menu_it_alerts" name="Alertes" parent="menu_it_equipment_main" action="action_it_alert" sequence="40"/>
+    <menuitem id="menu_it_maintenance_history" name="Historique Maintenance" parent="menu_it_equipment_main" action="action_it_maintenance" sequence="50"/>
+    <menuitem id="menu_it_statistics" name="Statistiques" parent="menu_it_equipment_main" action="action_it_statistics" sequence="60"/>
+    
+    <!-- 2. Incidents / Interventions -->
+    <menuitem id="menu_it_support" name="Incidents / Interventions" parent="menu_it_root" sequence="20"/>
+    <menuitem id="menu_it_incidents" name="Tickets Incidents" parent="menu_it_support" action="action_it_incident" sequence="10"/>
+    <menuitem id="menu_it_interventions" name="Interventions Technicien" parent="menu_it_support" action="action_it_intervention" sequence="20"/>
+    <menuitem id="menu_it_intervention_history" name="Historique des Interventions" parent="menu_it_support" action="action_it_intervention_history" sequence="30"/>
+    
+    <!-- 3. Contrats & Facturation -->
+    <menuitem id="menu_it_billing" name="Contrats &amp; Facturation" parent="menu_it_root" sequence="30"/>
+    <menuitem id="menu_it_contracts" name="Contrats de Service" parent="menu_it_billing" action="action_it_service_contract" sequence="10"/>
+    <menuitem id="menu_it_recurring_billing" name="Facturation Récurrente" parent="menu_it_billing" action="action_it_recurring_billing" sequence="20"/>
+    <menuitem id="menu_it_invoices" name="Factures" parent="menu_it_billing" action="action_it_invoices" sequence="30"/>
+    <menuitem id="menu_it_payments" name="Paiements" parent="menu_it_billing" action="action_it_payments" sequence="40"/>
+    
+    <!-- 4. Clients -->
+    <menuitem id="menu_it_clients" name="Clients" parent="menu_it_root" sequence="40"/>
+    <menuitem id="menu_it_client_sites" name="Sites Clients" parent="menu_it_clients" action="action_it_client_site" sequence="10"/>
+    <menuitem id="menu_it_employee_contacts" name="Contacts Employés" parent="menu_it_clients" action="action_it_employee_contacts" sequence="20"/>
+    
+    <!-- 5. Configuration -->
+    <menuitem id="menu_it_configuration" name="Configuration" parent="menu_it_root" sequence="50"/>
+    <menuitem id="menu_it_equipment_types" name="Types de Matériel" parent="menu_it_configuration" action="action_it_equipment_types" sequence="10"/>
+    <menuitem id="menu_it_license_models" name="Modèles de Licences" parent="menu_it_configuration" action="action_it_license_models" sequence="20"/>
+    <menuitem id="menu_it_contract_types" name="Types de Contrats" parent="menu_it_configuration" action="action_it_contract_types" sequence="30"/>
+    <menuitem id="menu_it_technicians" name="Techniciens" parent="menu_it_configuration" action="action_it_technicians" sequence="40"/>
+</odoo>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_it_client_site_form" model="ir.ui.view">
+        <field name="name">it.client.site.form</field>
+        <field name="model">it.client.site</field>
+        <field name="arch" type="xml">
+            <form string="Site Client">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nom du site"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="client_id"/>
+                            <field name="contact_id"/>
+                        </group>
+                        <group>
+                            <field name="address"/>
+                            <field name="city"/>
+                            <field name="zip_code"/>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_it_client_site_tree" model="ir.ui.view">
+        <field name="name">it.client.site.tree</field>
+        <field name="model">it.client.site</field>
+        <field name="arch" type="xml">
+            <list string="Sites Clients">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="contact_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_it_client_site" model="ir.actions.act_window">
+        <field name="name">Sites Clients</field>
+        <field name="res_model">it.client.site</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_it_client_site"
+              name="Sites Clients"
+              action="action_it_client_site"
+              parent="menu_it_asset_management"
+              sequence="40"/>
+</odoo>

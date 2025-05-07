@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_it_service_contract_form" model="ir.ui.view">
+        <field name="name">it.service.contract.form</field>
+        <field name="model">it.service.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contrat de service">
+                <header>
+                    <button name="action_confirm" string="Confirmer" type="object" 
+                            states="draft" class="oe_highlight"/>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}" 
+                           statusbar_visible="draft,active,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="client_id"/>
+                            <field name="partner_contact_id"/>
+                            <field name="contract_type"/>
+                            <field name="currency_id" groups="base.group_multi_currency"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="duration"/>
+                            <field name="end_date"/>
+                            <field name="billing_frequency"/>
+                            <field name="next_invoice_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Services" name="contract_lines">
+                            <field name="contract_line_ids">
+                                <tree string="Lignes de contrat" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="subtotal" sum="Total"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                        </page>
+                        <page string="Actifs couverts" name="assets">
+                            <field name="asset_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="asset_type"/>
+                                    <field name="serial_number"/>
+                                    <field name="purchase_date"/>
+                                    <field name="warranty_end_date"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Termes et conditions" name="terms">
+                            <field name="description" placeholder="Description du contrat..."/>
+                            <field name="terms_conditions" placeholder="Termes et conditions..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_it_service_contract_tree" model="ir.ui.view">
+        <field name="name">it.service.contract.tree</field>
+        <field name="model">it.service.contract</field>
+        <field name="arch" type="xml">
+            <tree string="Contrats de service" decoration-info="state == 'draft'" decoration-success="state == 'active'" decoration-muted="state == 'expired'" decoration-danger="state == 'cancelled'">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="contract_type"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="billing_frequency"/>
+                <field name="total_amount" sum="Total"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_it_service_contract_search" model="ir.ui.view">
+        <field name="name">it.service.contract.search</field>
+        <field name="model">it.service.contract</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un contrat">
+                <field name="name"/>
+                <field name="client_id"/>
+                <separator/>
+                <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Actif" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Expiré" name="expired" domain="[('state', '=', 'expired')]"/>
+                <filter string="Annulé" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Facturation mensuelle" name="monthly" domain="[('billing_frequency', '=', 'monthly')]"/>
+                <filter string="Facturation annuelle" name="annual" domain="[('billing_frequency', '=', 'annual')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter string="Client" name="client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Type de contrat" name="type" context="{'group_by': 'contract_type'}"/>
+                    <filter string="État" name="state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_it_service_contract" model="ir.actions.act_window">
+        <field name="name">Contrats de service</field>
+        <field name="res_model">it.service.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre premier contrat de service
+            </p>
+            <p>
+                Les contrats de service définissent les conditions de vos prestations pour chaque client.
+            </p>
+        </field>
+    </record>
+</odoo>
