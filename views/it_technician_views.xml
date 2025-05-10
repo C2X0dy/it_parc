@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue liste des compétences -->
+    <record id="view_it_skill_list" model="ir.ui.view">
+        <field name="name">it.skill.list</field>
+        <field name="model">it.skill</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="category"/>
+                <field name="description"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Vue liste des certifications -->
+    <record id="view_it_certification_list" model="ir.ui.view">
+        <field name="name">it.certification.list</field>
+        <field name="model">it.certification</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="organization"/>
+                <field name="date_obtained"/>
+                <field name="expiry_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue liste des techniciens -->
+    <record id="view_it_technician_list" model="ir.ui.view">
+        <field name="name">it.technician.list</field>
+        <field name="model">it.technician</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="job_title"/>
+                <field name="department_id"/>
+                <field name="skill_ids" widget="many2many_tags"/>
+                <field name="intervention_count"/>
+                <field name="current_workload" widget="percentage"/>
+                <field name="availability_status" decoration-success="availability_status == 'available'" 
+                                               decoration-warning="availability_status == 'busy'"
+                                               decoration-danger="availability_status == 'unavailable'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue formulaire des techniciens - corrigée -->
+    <record id="view_it_technician_form" model="ir.ui.view">
+        <field name="name">it.technician.form</field>
+        <field name="model">it.technician</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- Section vide pour structure -->
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_it_intervention)d" type="action" 
+                                string="Interventions" class="oe_stat_button" icon="fa-wrench"/>
+                    </div>
+                    <field name="image_1920" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nom du technicien"/>
+                        </h1>
+                        <h3>
+                            <field name="job_title" placeholder="Poste"/>
+                        </h3>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" required="1"/>
+                            <field name="department_id"/>
+                            <field name="user_id"/>
+                            <field name="availability_status" decoration-success="availability_status == 'available'" 
+                                                          decoration-warning="availability_status == 'busy'"
+                                                          decoration-danger="availability_status == 'unavailable'"/>
+                        </group>
+                        <group>
+                            <field name="mobile_phone"/>
+                            <field name="work_email"/>
+                            <field name="intervention_count"/>
+                            <field name="current_workload" widget="percentage"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Skills">
+                            <field name="skill_ids">
+                                <!-- Remplacer tree par list -->
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="category"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Certifications">
+                            <field name="certification_ids">
+                                <!-- Remplacer tree par list -->
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="organization"/>
+                                    <field name="date_obtained"/>
+                                    <field name="expiry_date"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour les techniciens -->
+    <record id="action_it_technician" model="ir.actions.act_window">
+        <field name="name">Techniciens</field>
+        <field name="res_model">it.technician</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu pour les techniciens -->
+    <menuitem id="menu_it_technician" 
+              name="Techniciens"
+              parent="menu_it_parc_root" 
+              action="action_it_technician" 
+              sequence="25"/>
+</odoo>

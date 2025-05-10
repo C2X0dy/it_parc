@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue graphique -->
+    <record id="view_it_communication_report_pivot" model="ir.ui.view">
+        <field name="name">it.communication.report.pivot</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse des communications" display_quantity="true" sample="1">
+                <field name="channel_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="create_date" interval="month" type="row"/>
+                <field name="__count" string="Nombre de messages" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Vue graphique -->
+    <record id="view_it_communication_report_graph" model="ir.ui.view">
+        <field name="name">it.communication.report.graph</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Analyse des communications" type="line" sample="1">
+                <field name="create_date" interval="day"/>
+                <field name="channel_id"/>
+                <field name="__count" string="Nombre de messages"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

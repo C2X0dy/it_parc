@@ -1,0 +1,1413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- My IT Assets - Vue améliorée -->
+    <template id="portal_my_it_assets" name="My IT Assets">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Mes équipements informatiques</t>
+                <!-- Filtres améliorés -->
+                <t t-set="searchbar_filters" t-value="{'all': {'label': 'Tous', 'domain': []},
+                                                    'computer': {'label': 'Ordinateurs', 'domain': [('asset_type', '=', 'computer')]},
+                                                    'printer': {'label': 'Imprimantes', 'domain': [('asset_type', '=', 'printer')]},
+                                                    'network': {'label': 'Équipements réseau', 'domain': [('asset_type', '=', 'network')]},
+                                                    'other': {'label': 'Autres', 'domain': [('asset_type', '=', 'other')]}}"/>
+                <!-- Tri -->
+                <t t-set="searchbar_sortings" t-value="{'name': {'label': 'Nom', 'order': 'name'},
+                                                       'date': {'label': 'Date achat', 'order': 'purchase_date desc'}}"/>
+            </t>
+            
+            <!-- Statistiques sommaires -->
+            <div class="row mt-3">
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h2 t-esc="asset_count" class="text-primary"/>
+                            <h5>Équipements totaux</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h2 t-esc="active_asset_count" class="text-success"/>
+                            <h5>Équipements actifs</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h2 t-esc="warranty_expiring_count" class="text-warning"/>
+                            <h5>Garanties expirant bientôt</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <t t-if="not assets">
+                <div class="alert alert-warning mt8" role="alert">
+                    Aucun équipement informatique n'est associé à votre compte.
+                </div>
+            </t>
+            
+            <t t-if="assets">
+                <div class="row mt-4">
+                    <div class="col-lg-12">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover o_portal_my_doc_table">
+                                <thead>
+                                    <tr class="active">
+                                        <th>Équipement</th>
+                                        <th>Type</th>
+                                        <th>N° de série</th>
+                                        <th>Statut</th>
+                                        <th>Fin de garantie</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="assets" t-as="asset">
+                                        <tr>
+                                            <td>
+                                                <a t-attf-href="/my/asset/#{asset.id}">
+                                                    <span t-field="asset.name"/>
+                                                </a>
+                                            </td>
+                                            <td><span t-field="asset.asset_type"/></td>
+                                            <td><span t-field="asset.serial_number"/></td>
+                                            <td>
+                                                <span t-if="asset.status == 'active'" class="badge badge-success">
+                                                    <span t-field="asset.status"/>
+                                                </span>
+                                                <span t-elif="asset.status == 'maintenance'" class="badge badge-warning">
+                                                    <span t-field="asset.status"/>
+                                                </span>
+                                                <span t-else="" class="badge badge-secondary">
+                                                    <span t-field="asset.status"/>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span t-field="asset.warranty_end"/>
+                                                <span t-if="asset.warranty_end and asset.warranty_end &lt; today_plus_30" class="badge badge-danger">Expiration proche</span>
+                                            </td>
+                                            <td>
+                                                <a t-attf-href="/my/create/ticket?asset_id=#{asset.id}" class="btn btn-sm btn-primary">
+                                                    <i class="fa fa-ticket"/> Ticket
+                                                </a>
+                                                <a t-attf-href="/my/create/intervention?asset_id=#{asset.id}" class="btn btn-sm btn-outline-secondary ml-2">
+                                                    <i class="fa fa-wrench"/> Intervention
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="o_portal_pager justify-content-center">
+                            <t t-call="portal.pager"/>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+    
+    <!-- Vue détaillée d'un équipement -->
+    <template id="portal_asset_detail" name="Detailed Asset View">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <h3><span t-field="asset.name"/></h3>
+                            </div>
+                            <div class="col-lg-6 text-right">
+                                <a t-attf-href="/my/create/ticket?asset_id=#{asset.id}" class="btn btn-primary">
+                                    <i class="fa fa-ticket"/> Créer un ticket
+                                </a>
+                                <a t-attf-href="/my/create/intervention?asset_id=#{asset.id}" class="btn btn-outline-secondary ml-2">
+                                    <i class="fa fa-wrench"/> Demander une intervention
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>Type:</th>
+                                        <td><span t-field="asset.asset_type"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Numéro de série:</th>
+                                        <td><span t-field="asset.serial_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Statut:</th>
+                                        <td>
+                                            <span t-if="asset.status == 'active'" class="badge badge-success">
+                                                <span t-field="asset.status"/>
+                                            </span>
+                                            <span t-else="" class="badge badge-secondary">
+                                                <span t-field="asset.status"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>Date d'achat:</th>
+                                        <td><span t-field="asset.purchase_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fin de garantie:</th>
+                                        <td>
+                                            <span t-field="asset.warranty_end"/>
+                                            <span t-if="asset.warranty_end and asset.warranty_end &lt; today_plus_30" class="badge badge-danger">Expiration proche</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Emplacement:</th>
+                                        <td><span t-field="asset.location"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Logiciels installés -->
+                        <t t-if="asset.software_ids">
+                            <h4 class="mt-4">Logiciels installés</h4>
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Version</th>
+                                        <th>Éditeur</th>
+                                        <th>Licence</th>
+                                        <th>Expiration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="asset.software_ids" t-as="software">
+                                        <tr>
+                                            <td><span t-field="software.name"/></td>
+                                            <td><span t-field="software.version"/></td>
+                                            <td><span t-field="software.publisher"/></td>
+                                            <td><span t-field="software.license_type"/></td>
+                                            <td>
+                                                <span t-field="software.expiration_date"/>
+                                                <span t-if="software.expiration_date and software.expiration_date &lt; today_plus_30" class="badge badge-danger">Expiration proche</span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        
+                        <!-- Contrat de maintenance -->
+                        <t t-if="asset.contract_id">
+                            <h4 class="mt-4">Contrat de maintenance</h4>
+                            <div class="alert alert-info">
+                                <strong>Référence:</strong> <span t-field="asset.contract_id.name"/><br/>
+                                <strong>Début:</strong> <span t-field="asset.contract_id.start_date"/> | 
+                                <strong>Fin:</strong> <span t-field="asset.contract_id.end_date"/><br/>
+                                <a t-attf-href="/my/contract/#{asset.contract_id.id}" class="btn btn-sm btn-outline-primary mt-2">
+                                    Voir le contrat complet
+                                </a>
+                            </div>
+                        </t>
+                        
+                        <!-- Historique des tickets récents -->
+                        <t t-if="recent_tickets">
+                            <h4 class="mt-4">Tickets récents</h4>
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Référence</th>
+                                        <th>Date</th>
+                                        <th>Priorité</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="recent_tickets" t-as="ticket">
+                                        <tr>
+                                            <td>
+                                                <a t-attf-href="/my/ticket/#{ticket.id}">
+                                                    <span t-field="ticket.name"/>
+                                                </a>
+                                            </td>
+                                            <td><span t-field="ticket.date_created"/></td>
+                                            <td><span t-field="ticket.priority"/></td>
+                                            <td><span t-field="ticket.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        
+                        <!-- Notes -->
+                        <t t-if="asset.notes">
+                            <h4 class="mt-4">Notes</h4>
+                            <div class="card">
+                                <div class="card-body">
+                                    <span t-field="asset.notes"/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/my/assets" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"/> Retour à mes équipements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Formulaire de demande d'intervention -->
+<template id="portal_create_intervention" name="Request Intervention">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Demande d'intervention technique</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" t-attf-action="/my/create/intervention" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="intervention_type">Type d'intervention</label>
+                            <div class="col-md-9">
+                                <select name="intervention_type" id="intervention_type" class="form-control" required="1">
+                                    <option value="">-- Sélectionnez --</option>
+                                    <option value="preventive">Maintenance préventive</option>
+                                    <option value="corrective">Maintenance corrective</option>
+                                    <option value="installation">Installation</option>
+                                    <option value="upgrade">Mise à niveau</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="asset_id">Équipement concerné</label>
+                            <div class="col-md-9">
+                                <select name="asset_id" id="asset_id" class="form-control" required="1">
+                                    <option value="">-- Sélectionnez --</option>
+                                    <t t-foreach="assets" t-as="asset">
+                                        <option t-att-value="asset.id" t-att-selected="asset_id and asset.id == int(asset_id)">
+                                            <t t-esc="asset.name"/> (<t t-esc="asset.asset_type"/>)
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="priority">Priorité</label>
+                            <div class="col-md-9">
+                                <select name="priority" id="priority" class="form-control">
+                                    <option value="0">Basse</option>
+                                    <option value="1" selected="selected">Normale</option>
+                                    <option value="2">Haute</option>
+                                    <option value="3">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="preferred_date">Date souhaitée</label>
+                            <div class="col-md-9">
+                                <input type="date" name="preferred_date" id="preferred_date" class="form-control" 
+                                       required="1" t-att-min="today"/>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="preferred_time">Horaire souhaité</label>
+                            <div class="col-md-9">
+                                <select name="preferred_time" id="preferred_time" class="form-control">
+                                    <option value="morning">Matin (8h-12h)</option>
+                                    <option value="afternoon">Après-midi (13h-17h)</option>
+                                    <option value="allday">Toute la journée</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="description">Description détaillée</label>
+                            <div class="col-md-9">
+                                <textarea name="description" id="description" rows="5" class="form-control" 
+                                          placeholder="Détaillez votre demande d'intervention..." required="1"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="attachment">Pièces jointes</label>
+                            <div class="col-md-9">
+                                <input type="file" name="attachment" id="attachment" class="form-control-file"/>
+                                <small class="form-text text-muted">Documents ou photos utiles pour l'intervention (max 10MB)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row mt-4">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-check"/> Soumettre la demande
+                                </button>
+                                <a href="/my/assets" class="btn btn-secondary ml-2">
+                                    <i class="fa fa-times"/> Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
+
+<!-- Template de confirmation -->
+<template id="portal_intervention_created" name="Intervention Request Confirmation">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="alert alert-success">
+                <h4><i class="fa fa-check-circle"/> Votre demande d'intervention a été enregistrée</h4>
+                <p>Notre équipe va traiter votre demande dans les plus brefs délais.</p>
+                <p>Référence: <strong><t t-esc="intervention.name"/></strong></p>
+                <p>Un de nos techniciens vous contactera pour confirmer la date et l'heure de l'intervention.</p>
+            </div>
+            <div class="mt-4">
+                <a href="/my/assets" class="btn btn-primary">
+                    <i class="fa fa-arrow-left"/> Retour à mes équipements
+                </a>
+                <a t-att-href="'/my/interventions/%s' % intervention.id" class="btn btn-outline-primary ml-2">
+                    <i class="fa fa-eye"/> Voir les détails de l'intervention
+                </a>
+            </div>
+        </div>
+    </t>
+</template>
+    
+    <!-- Suivi amélioré des contrats -->
+<template id="portal_my_it_contracts" name="My IT Contracts">
+    <t t-call="portal.portal_layout">
+        <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+        <t t-call="portal.portal_searchbar">
+            <t t-set="title">Contrats de maintenance</t>
+            <!-- Filtres -->
+            <t t-set="searchbar_filters" t-value="{'all': {'label': 'Tous', 'domain': []},
+                                                'active': {'label': 'Actifs', 'domain': [('state', '=', 'active')]},
+                                                'expiring': {'label': 'Expirant bientôt', 'domain': [('expiry_alert', '=', True)]}}"/>
+        </t>
+        
+        <!-- Statistiques sommaires -->
+        <div class="row mt-3">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h2 t-esc="contract_count" class="text-primary"/>
+                        <h5>Contrats totaux</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h2 t-esc="active_contract_count" class="text-success"/>
+                        <h5>Contrats actifs</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h2 t-esc="expiring_contract_count" class="text-warning"/>
+                        <h5>Contrats expirant bientôt</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <t t-if="not contracts">
+            <div class="alert alert-warning mt8" role="alert">
+                Aucun contrat de maintenance n'est associé à votre compte.
+            </div>
+        </t>
+        
+        <t t-if="contracts">
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover o_portal_my_doc_table">
+                            <thead>
+                                <tr class="active">
+                                    <th>Référence</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Équipements couverts</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="contracts" t-as="contract">
+                                    <tr t-attf-class="{{ 'table-warning' if contract.expiry_alert else '' }}">
+                                        <td>
+                                            <a t-attf-href="/my/contract/#{contract.id}">
+                                                <span t-field="contract.name"/>
+                                            </a>
+                                        </td>
+                                        <td><span t-field="contract.start_date"/></td>
+                                        <td>
+                                            <span t-field="contract.end_date"/>
+                                            <span t-if="contract.expiry_alert" class="badge badge-danger">Expiration proche</span>
+                                        </td>
+                                        <td><span t-esc="len(contract.asset_ids)"/></td>
+                                        <td><span t-field="contract.amount"/></td>
+                                        <td>
+                                            <span t-if="contract.state == 'active'" class="badge badge-success">
+                                                <span t-field="contract.state"/>
+                                            </span>
+                                            <span t-elif="contract.state == 'expired'" class="badge badge-secondary">
+                                                <span t-field="contract.state"/>
+                                            </span>
+                                            <span t-else="" class="badge badge-info">
+                                                <span t-field="contract.state"/>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a t-attf-href="/my/contract/#{contract.id}" class="btn btn-sm btn-primary">
+                                                <i class="fa fa-eye"/> Détails
+                                            </a>
+                                            <a t-attf-href="/my/contract/renew/#{contract.id}" t-if="contract.expiry_alert" class="btn btn-sm btn-warning ml-2">
+                                                <i class="fa fa-refresh"/> Renouveler
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="o_portal_pager">
+                        <t t-call="portal.pager"/>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+
+<!-- Vue détaillée d'un contrat -->
+<template id="portal_contract_detail" name="Contract Details">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h3>Contrat: <span t-field="contract.name"/></h3>
+                        </div>
+                        <div class="col-lg-6 text-right">
+                            <span t-if="contract.state == 'active'" class="badge badge-pill badge-success">
+                                <span t-field="contract.state"/>
+                            </span>
+                            <span t-elif="contract.state == 'expired'" class="badge badge-pill badge-secondary">
+                                <span t-field="contract.state"/>
+                            </span>
+                            <span t-else="" class="badge badge-pill badge-info">
+                                <span t-field="contract.state"/>
+                            </span>
+                            
+                            <a t-if="contract.expiry_alert" t-attf-href="/my/contract/renew/#{contract.id}" class="btn btn-warning ml-2">
+                                <i class="fa fa-refresh"/> Renouveler
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Alerte d'expiration -->
+                    <div t-if="contract.expiry_alert" class="alert alert-warning" role="alert">
+                        <strong>Attention :</strong> Ce contrat expire dans <span t-field="contract.days_to_expiry"/> jours !
+                        <a t-attf-href="/my/contract/renew/#{contract.id}" class="btn btn-sm btn-warning float-right">
+                            <i class="fa fa-refresh"/> Renouveler maintenant
+                        </a>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Date de début:</th>
+                                    <td><span t-field="contract.start_date"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Date de fin:</th>
+                                    <td><span t-field="contract.end_date"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Prochaine facturation:</th>
+                                    <td><span t-field="contract.next_invoice_date"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Montant:</th>
+                                    <td><span t-field="contract.amount"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Fréquence de facturation:</th>
+                                    <td><span t-field="contract.billing_frequency"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Valeur totale du contrat:</th>
+                                    <td><span t-field="contract.contract_value"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des équipements couverts -->
+                    <h4 class="mt-4">Équipements couverts</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>N° de série</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="contract.asset_ids" t-as="asset">
+                                    <tr>
+                                        <td>
+                                            <a t-attf-href="/my/asset/#{asset.id}">
+                                                <span t-field="asset.name"/>
+                                            </a>
+                                        </td>
+                                        <td><span t-field="asset.asset_type"/></td>
+                                        <td><span t-field="asset.serial_number"/></td>
+                                        <td><span t-field="asset.status"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Historique des factures -->
+                    <h4 class="mt-4">Historique des factures</h4>
+                    <t t-if="contract.invoice_ids">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Référence</th>
+                                        <th>Date</th>
+                                        <th>Montant</th>
+                                        <th>État</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="contract.invoice_ids" t-as="invoice">
+                                        <tr>
+                                            <td><span t-field="invoice.name"/></td>
+                                            <td><span t-field="invoice.invoice_date"/></td>
+                                            <td><span t-field="invoice.amount_total"/></td>
+                                            <td>
+                                                <span t-if="invoice.payment_state == 'paid'" class="badge badge-success">Payée</span>
+                                                <span t-else="" class="badge badge-warning"><span t-field="invoice.payment_state"/></span>
+                                            </td>
+                                            <td>
+                                                <a t-if="invoice.payment_state != 'paid'" t-attf-href="/my/invoices/#{invoice.id}" class="btn btn-sm btn-primary">
+                                                    <i class="fa fa-credit-card"/> Payer
+                                                </a>
+                                                <a t-attf-href="/my/invoices/pdf/#{invoice.id}" class="btn btn-sm btn-outline-secondary ml-2">
+                                                    <i class="fa fa-download"/> PDF
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="alert alert-info">
+                            Aucune facture n'a encore été générée pour ce contrat.
+                        </div>
+                    </t>
+                </div>
+                
+                <div class="card-footer">
+                    <a href="/my/contracts" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"/> Retour aux contrats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
+    
+    <!-- Template de message générique -->
+<template id="portal_simple_message" name="Simple Message">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="alert alert-info">
+                <h4><t t-esc="title"/></h4>
+                <p><t t-esc="message"/></p>
+            </div>
+            <div class="mt-4">
+                <a t-att-href="back_url" class="btn btn-primary">
+                    <i class="fa fa-arrow-left"/> Retour
+                </a>
+            </div>
+        </div>
+    </t>
+</template>
+
+    <!-- Existants templates modifiés... -->
+
+<!-- Ajouter le menu de navigation dans le portail -->
+<template id="portal_my_home_it_parc" name="IT Assets Portal Menu" inherit_id="portal.portal_my_home" priority="30">
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <i class="fa fa-laptop text-primary mr-2"></i>
+                        <h4 class="mb-0">Informatique</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="/my/assets" class="btn btn-link btn-block text-left pl-0">
+                                <i class="fa fa-desktop"></i> Équipements
+                                <t t-if="asset_count" class="badge badge-primary ml-2">
+                                    <t t-esc="asset_count"/>
+                                </t>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/my/contracts" class="btn btn-link btn-block text-left pl-0">
+                                <i class="fa fa-file-contract"></i> Contrats
+                                <t t-if="contract_count" class="badge badge-primary ml-2">
+                                    <t t-esc="contract_count"/>
+                                </t>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="/my/tickets" class="btn btn-link btn-block text-left pl-0">
+                                <i class="fa fa-ticket-alt"></i> Tickets
+                                <t t-if="ticket_count" class="badge badge-primary ml-2">
+                                    <t t-esc="ticket_count"/>
+                                </t>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/my/create/intervention" class="btn btn-link btn-block text-left pl-0">
+                                <i class="fa fa-wrench"></i> Demander intervention
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+<!-- Menu supérieur du portail -->
+<template id="portal_breadcrumbs_it_parc" inherit_id="portal.portal_breadcrumbs" priority="20">
+    <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+        <li t-if="page_name == 'assets' or page_name == 'asset'" class="breadcrumb-item">
+            <a t-if="page_name != 'assets'" href="/my/assets">Équipements informatiques</a>
+            <t t-else="">Équipements informatiques</t>
+        </li>
+        <li t-if="page_name == 'asset'" class="breadcrumb-item active">
+            <t t-esc="asset.name"/>
+        </li>
+        <li t-if="page_name == 'contracts' or page_name == 'contract'" class="breadcrumb-item">
+            <a t-if="page_name != 'contracts'" href="/my/contracts">Contrats de maintenance</a>
+            <t t-else="">Contrats de maintenance</t>
+        </li>
+        <li t-if="page_name == 'contract'" class="breadcrumb-item active">
+            <t t-esc="contract.name"/>
+        </li>
+        <li t-if="page_name == 'tickets' or page_name == 'ticket'" class="breadcrumb-item">
+            <a t-if="page_name != 'tickets'" href="/my/tickets">Tickets support</a>
+            <t t-else="">Tickets support</t>
+        </li>
+        <li t-if="page_name == 'create_intervention'" class="breadcrumb-item active">
+            Demande d'intervention
+        </li>
+    </xpath>
+</template>
+
+<!-- Dashboard IT du Client -->
+<template id="portal_it_dashboard" name="IT Dashboard">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <h1 class="mb-4">Tableau de bord IT</h1>
+            
+            <!-- Statistiques générales -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card text-center bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <h2 t-esc="asset_count"/>
+                            <p class="mb-0">Équipements</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-success text-white mb-4">
+                        <div class="card-body">
+                            <h2 t-esc="active_count"/>
+                            <p class="mb-0">Équipements actifs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <h2 t-esc="ticket_count"/>
+                            <p class="mb-0">Tickets ouverts</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-info text-white mb-4">
+                        <div class="card-body">
+                            <h2 t-esc="intervention_count"/>
+                            <p class="mb-0">Interventions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alertes et notifications -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fa fa-exclamation-triangle mr-2"></i>Alertes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div t-if="expiring_warranties" class="alert alert-warning">
+                                <i class="fa fa-clock-o"></i> <t t-esc="expiring_warranties"/> équipement(s) avec garantie expirant dans les 30 jours
+                            </div>
+                            <div t-if="expiring_contracts" class="alert alert-warning">
+                                <i class="fa fa-file-text-o"></i> <t t-esc="expiring_contracts"/> contrat(s) expirant prochainement
+                            </div>
+                            <div t-if="not expiring_warranties and not expiring_contracts" class="text-success">
+                                <i class="fa fa-check-circle"></i> Aucune alerte actuellement
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fa fa-tasks mr-2"></i>Activité récente</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                <t t-foreach="recent_activities" t-as="activity">
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1" t-esc="activity['name']"/>
+                                            <small t-esc="activity['date']"/>
+                                        </div>
+                                        <p class="mb-1" t-esc="activity['description']"/>
+                                    </a>
+                                </t>
+                                <div t-if="not recent_activities" class="list-group-item">
+                                    Aucune activité récente
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions rapides -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fa fa-bolt mr-2"></i>Actions rapides</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <a href="/my/create/ticket" class="btn btn-primary btn-block py-3">
+                                        <i class="fa fa-ticket fa-2x d-block mb-2"></i>
+                                        Créer un ticket
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/my/create/intervention" class="btn btn-success btn-block py-3">
+                                        <i class="fa fa-wrench fa-2x d-block mb-2"></i>
+                                        Demander une intervention
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/my/create/quote" class="btn btn-info btn-block py-3">
+                                        <i class="fa fa-file-text fa-2x d-block mb-2"></i>
+                                        Demander un devis
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/my/reports" class="btn btn-warning btn-block py-3">
+                                        <i class="fa fa-bar-chart fa-2x d-block mb-2"></i>
+                                        Voir les rapports
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
+
+<!-- Vue détaillée de l'état de santé de l'équipement -->
+<template id="portal_asset_health" name="Asset Health Status">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between mb-3">
+                <h1><t t-esc="asset.name"/> - État de santé</h1>
+                <div>
+                    <a t-attf-href="/my/asset/#{asset.id}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Retour à l'équipement
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Indicateurs de santé</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Score de santé global -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Score de santé global</h6>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="position-relative" style="width: 120px; height: 120px;">
+                                            <t t-set="health_score" t-value="asset.health_score or 75"/>
+                                            <t t-set="score_color" t-value="'success' if health_score >= 70 else 'warning' if health_score >= 50 else 'danger'"/>
+                                            
+                                            <div class="progress rounded-circle" style="height: 120px; width: 120px;">
+                                                <div t-attf-class="progress-bar bg-#{score_color}" role="progressbar" t-att-style="'width: ' + str(health_score) + '%; height: 120px;'" t-att-aria-valuenow="health_score" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                                <h2 t-esc="health_score"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Âge de l'équipement -->
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Âge de l'équipement</h6>
+                                    <h2 t-esc="asset.age_in_months or 0"/><span class="small"> mois</span>
+                                    <p class="mb-0">
+                                        <span t-attf-class="badge badge-#{(asset.age_in_months or 0) > 36 and 'danger' or ((asset.age_in_months or 0) > 24 and 'warning' or 'success')}">
+                                            <t t-if="(asset.age_in_months or 0) > 36">Ancien</t>
+                                            <t t-elif="(asset.age_in_months or 0) > 24">Moyen</t>
+                                            <t t-else="">Récent</t>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Valeur résiduelle -->
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Valeur résiduelle</h6>
+                                    <h2 t-esc="asset.current_value or 0"/><span class="small"> €</span>
+                                    <p class="mb-0">
+                                        <t t-set="depreciation_percent" t-value="100 - (asset.current_value or 0) / (asset.purchase_value or 1) * 100"/>
+                                        <span t-esc="round(depreciation_percent)"/>% de dépréciation
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicateurs détaillés -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>État matériel</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Composant</th>
+                                    <th>État</th>
+                                </tr>
+                                <t t-if="asset.asset_type == 'computer'">
+                                    <tr>
+                                        <td>Processeur</td>
+                                        <td>
+                                            <span t-attf-class="badge badge-#{asset.cpu_health == 'good' and 'success' or (asset.cpu_health == 'medium' and 'warning' or 'danger')}">
+                                                <t t-esc="asset.cpu_health or 'Non évalué'"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mémoire</td>
+                                        <td>
+                                            <span t-attf-class="badge badge-#{asset.memory_health == 'good' and 'success' or (asset.memory_health == 'medium' and 'warning' or 'danger')}">
+                                                <t t-esc="asset.memory_health or 'Non évalué'"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Disque dur</td>
+                                        <td>
+                                            <span t-attf-class="badge badge-#{asset.disk_health == 'good' and 'success' or (asset.disk_health == 'medium' and 'warning' or 'danger')}">
+                                                <t t-esc="asset.disk_health or 'Non évalué'"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Batterie</td>
+                                        <td>
+                                            <span t-attf-class="badge badge-#{asset.battery_health == 'good' and 'success' or (asset.battery_health == 'medium' and 'warning' or 'danger')}">
+                                                <t t-esc="asset.battery_health or 'Non évalué'"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Historique de maintenance</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>État après</th>
+                                </tr>
+                                <t t-foreach="asset_interventions" t-as="intervention">
+                                    <tr>
+                                        <td><t t-esc="intervention.date_end"/></td>
+                                        <td><t t-esc="intervention.type"/></td>
+                                        <td>
+                                            <span t-attf-class="badge badge-#{intervention.post_condition == 'good' and 'success' or (intervention.post_condition == 'medium' and 'warning' or 'danger')}">
+                                                <t t-esc="intervention.post_condition or 'Non évalué'"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <tr t-if="not asset_interventions">
+                                    <td colspan="3" class="text-center">Aucun historique de maintenance</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommandations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Recommandations</h5>
+                </div>
+                <div class="card-body">
+                    <div t-if="asset.renewal_priority == 'critical'" class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"></i> Cet équipement nécessite un remplacement urgent.
+                    </div>
+                    <div t-elif="asset.renewal_priority == 'high'" class="alert alert-warning">
+                        <i class="fa fa-exclamation-circle"></i> Cet équipement devrait être renouvelé prochainement.
+                    </div>
+                    <div t-elif="asset.renewal_priority == 'medium'" class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Prévoyez un renouvellement dans les 6 à 12 mois.
+                    </div>
+                    <div t-elif="asset.renewal_priority == 'low'" class="alert alert-success">
+                        <i class="fa fa-check-circle"></i> Cet équipement est en bon état et ne nécessite pas de renouvellement immédiat.
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="/my/create/quote" class="btn btn-primary">
+                            <i class="fa fa-file-text"></i> Demander un devis de remplacement
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
+
+<!-- Formulaire de demande de devis -->
+<template id="portal_create_quote" name="Request Quote">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Demande de devis</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" t-attf-action="/my/create/quote" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="quote_type">Type de demande</label>
+                            <div class="col-md-9">
+                                <select name="quote_type" id="quote_type" class="form-control" required="1">
+                                    <option value="">-- Sélectionnez --</option>
+                                    <option value="new_equipment">Nouvel équipement</option>
+                                    <option value="replacement">Remplacement d'équipement existant</option>
+                                    <option value="upgrade">Mise à niveau d'équipement</option>
+                                    <option value="software">Logiciel ou licence</option>
+                                    <option value="service">Service IT</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row" id="existing_asset_div">
+                            <label class="col-form-label col-md-3" for="asset_id">Équipement concerné</label>
+                            <div class="col-md-9">
+                                <select name="asset_id" id="asset_id" class="form-control">
+                                    <option value="">-- Sélectionnez si applicable --</option>
+                                    <t t-foreach="assets" t-as="asset">
+                                        <option t-att-value="asset.id" t-att-selected="asset_id and asset.id == int(asset_id)">
+                                            <t t-esc="asset.name"/> (<t t-esc="asset.asset_type"/>)
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="subject">Sujet</label>
+                            <div class="col-md-9">
+                                <input type="text" name="subject" id="subject" class="form-control" required="1"
+                                       placeholder="Ex: Devis pour 5 ordinateurs portables"/>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="description">Description détaillée</label>
+                            <div class="col-md-9">
+                                <textarea name="description" id="description" class="form-control" rows="5" required="1"
+                                          placeholder="Décrivez votre besoin en détail (caractéristiques souhaitées, quantité, usage prévu...)"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="budget">Budget approximatif</label>
+                            <div class="col-md-9">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                    <input type="number" name="budget" id="budget" class="form-control" placeholder="Budget approximatif"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="desired_date">Date souhaitée</label>
+                            <div class="col-md-9">
+                                <input type="date" name="desired_date" id="desired_date" class="form-control"/>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-3" for="attachment">Documents</label>
+                            <div class="col-md-9">
+                                <input type="file" name="attachment" id="attachment" class="form-control-file" multiple="multiple"/>
+                                <small class="form-text text-muted">Vous pouvez joindre des spécifications techniques ou d'autres documents pertinents.</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="urgent" name="urgent" value="1"/>
+                                    <label class="custom-control-label" for="urgent">Demande urgente</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row mt-4">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"></i> Envoyer la demande
+                                </button>
+                                <a href="/my/dashboard" class="btn btn-secondary ml-2">
+                                    <i class="fa fa-times"></i> Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
+
+<!-- Page de rapports IT -->
+<template id="portal_it_reports" name="IT Reports">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <h1 class="mb-4">Rapports du parc informatique</h1>
+            
+            <!-- Section de filtres -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fa fa-filter mr-2"></i>Filtres</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" t-attf-action="/my/reports">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="date_from">Date début</label>
+                                <input type="date" name="date_from" id="date_from" class="form-control" t-att-value="date_from"/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="date_to">Date fin</label>
+                                <input type="date" name="date_to" id="date_to" class="form-control" t-att-value="date_to"/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="asset_type">Type d'équipement</label>
+                                <select name="asset_type" id="asset_type" class="form-control">
+                                    <option value="">Tous les types</option>
+                                    <option value="computer" t-att-selected="asset_type == 'computer'">Ordinateurs</option>
+                                    <option value="printer" t-att-selected="asset_type == 'printer'">Imprimantes</option>
+                                    <option value="network" t-att-selected="asset_type == 'network'">Équipements réseau</option>
+                                    <option value="other" t-att-selected="asset_type == 'other'">Autres</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="report_type">Type de rapport</label>
+                                <select name="report_type" id="report_type" class="form-control">
+                                    <option value="inventory" t-att-selected="report_type == 'inventory'">Inventaire</option>
+                                    <option value="interventions" t-att-selected="report_type == 'interventions'">Interventions</option>
+                                    <option value="tickets" t-att-selected="report_type == 'tickets'">Tickets</option>
+                                    <option value="costs" t-att-selected="report_type == 'costs'">Coûts</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-search"></i> Filtrer
+                            </button>
+                            <a t-attf-href="/my/reports/export?date_from=#{date_from}&amp;date_to=#{date_to}&amp;asset_type=#{asset_type}&amp;report_type=#{report_type}" class="btn btn-success ml-2">
+                                <i class="fa fa-download"></i> Exporter (Excel)
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Rapport d'inventaire -->
+            <div t-if="report_type == 'inventory'" class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fa fa-list mr-2"></i>Rapport d'inventaire</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>N° de série</th>
+                                    <th>Date d'achat</th>
+                                    <th>Garantie</th>
+                                    <th>Statut</th>
+                                    <th>Valeur actuelle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="assets" t-as="asset">
+                                    <tr>
+                                        <td><t t-esc="asset.name"/></td>
+                                        <td><t t-esc="asset.asset_type"/></td>
+                                        <td><t t-esc="asset.serial_number"/></td>
+                                        <td><t t-esc="asset.purchase_date"/></td>
+                                        <td>
+                                            <t t-esc="asset.warranty_end"/>
+                                            <span t-if="asset.warranty_end and asset.warranty_end &lt; today_plus_30" class="badge badge-danger">Expire bientôt</span>
+                                        </td>
+                                        <td>
+                                            <span t-if="asset.status == 'active'" class="badge badge-success">Actif</span>
+                                            <span t-elif="asset.status == 'maintenance'" class="badge badge-warning">En maintenance</span>
+                                            <span t-else="" class="badge badge-secondary">Inactif</span>
+                                        </td>
+                                        <td><t t-esc="asset.current_value"/> €</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Synthèse graphique -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>Répartition des équipements par type</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="position: relative; height:250px; width:100%">
+                                <canvas id="assetTypeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>Âge moyen du parc informatique</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="position: relative; height:250px; width:100%">
+                                <canvas id="ageChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- JavaScript pour les graphiques -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", function() {
+                    // Graphique par type d'équipement
+                    var ctxType = document.getElementById('assetTypeChart').getContext('2d');
+                    var typeChart = new Chart(ctxType, {
+                        type: 'pie',
+                        data: {
+                            labels: <t t-esc="asset_type_labels"/>,
+                            datasets: [{
+                                data: <t t-esc="asset_type_data"/>,
+                                backgroundColor: [
+                                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                    
+                    // Graphique par âge
+                    var ctxAge = document.getElementById('ageChart').getContext('2d');
+                    var ageChart = new Chart(ctxAge, {
+                        type: 'bar',
+                        data: {
+                            labels: ['&lt; 1 an', '1-2 ans', '2-3 ans', '3-4 ans', '+4 ans'],
+                            datasets: [{
+                                label: 'Nombre d\'équipements',
+                                data: <t t-esc="asset_age_data"/>,
+                                backgroundColor: '#4e73df'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            </script>
+        </div>
+    </t>
+</template>
+
+<!-- Ajouter une entrée pour le tableau de bord IT -->
+<template id="portal_my_home_menu_it" name="IT Dashboard Menu Entry" inherit_id="portal.portal_my_home" priority="25">
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fa fa-laptop text-primary mr-2"></i>
+                        <span>Gestion IT</span>
+                    </div>
+                    <a href="/my/dashboard" class="btn btn-sm btn-outline-primary">Tableau de bord</a>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <a href="/my/assets" class="d-block mb-2">Vos équipements</a>
+                            <a href="/my/contracts" class="d-block mb-2">Contrats de maintenance</a>
+                            <a href="/my/tickets" class="d-block mb-2">Tickets de support</a>
+                        </div>
+                        <div class="col-auto">
+                            <span t-if="asset_count" class="badge badge-pill badge-primary"><t t-esc="asset_count"/></span>
+                        </div>
+                    </div>
+                    <div class="row align-items-center border-top pt-2 mt-2">
+                        <div class="col">
+                            <a href="/my/create/ticket" class="d-block mb-2">Créer un ticket</a>
+                            <a href="/my/create/quote" class="d-block mb-2">Demander un devis</a>
+                            <a href="/my/reports" class="d-block">Rapports</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+<!-- Template de confirmation pour les devis -->
+<template id="portal_quote_created" name="Quote Request Confirmation">
+    <t t-call="portal.portal_layout">
+        <div class="container mt-4">
+            <div class="alert alert-success">
+                <h4><i class="fa fa-check-circle"/> Votre demande de devis a été envoyée</h4>
+                <p>Notre équipe commerciale vous contactera dans les meilleurs délais.</p>
+                <p>Référence: <strong><t t-esc="ticket.name"/></strong></p>
+            </div>
+            <div class="mt-4">
+                <a href="/my/dashboard" class="btn btn-primary">
+                    <i class="fa fa-arrow-left"/> Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+    </t>
+</template>
+</odoo>

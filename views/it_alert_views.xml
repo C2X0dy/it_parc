@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue liste des alertes -->
+    <record id="view_it_alert_list" model="ir.ui.view">
+        <field name="name">it.alert.list</field>
+        <field name="model">it.alert</field>
+        <field name="arch" type="xml">
+            <list string="Alertes" default_order="priority desc, date_deadline">
+                <field name="name"/>
+                <field name="alert_type"/>
+                <field name="date_deadline"/>
+                <field name="days_remaining"/>
+                <field name="priority" widget="priority"/>
+                <field name="state" decoration-info="state == 'new'" 
+                                 decoration-warning="state == 'in_progress'" 
+                                 decoration-success="state == 'done'" 
+                                 decoration-muted="state == 'cancelled'"/>
+                <field name="partner_id"/>
+                <field name="assigned_to_id"/>
+                <field name="email_sent"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Vue kanban des alertes -->
+    <record id="view_it_alert_kanban" model="ir.ui.view">
+        <field name="name">it.alert.kanban</field>
+        <field name="model">it.alert</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column" 
+                    record_drag_and_drop="true" 
+                    group_create="0" group_delete="0">
+                <field name="name"/>
+                <field name="date_deadline"/>
+                <field name="days_remaining"/>
+                <field name="priority"/>
+                <field name="alert_type"/>
+                <field name="state"/>
+                <field name="assigned_to_id"/>
+                <field name="color"/>
+                <field name="partner_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click {{record.priority.raw_value > 1 ? 'oe_kanban_card_danger' : ''}} oe_kanban_color_#{record.color.raw_value}">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <small class="o_kanban_record_subtitle">
+                                            <field name="alert_type"/>
+                                        </small>
+                                    </div>
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" role="button">
+                                            <span class="fa fa-ellipsis-v"/>
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a t-if="record.state.raw_value == 'new'" role="menuitem" type="object" name="action_mark_in_progress" class="dropdown-item">Prendre en charge</a>
+                                            <a t-if="record.state.raw_value == 'in_progress'" role="menuitem" type="object" name="action_mark_done" class="dropdown-item">Marquer comme traité</a>
+                                            <a t-if="record.state.raw_value == 'new' or record.state.raw_value == 'in_progress'" role="menuitem" type="object" name="action_cancel" class="dropdown-item">Annuler</a>
+                                            <a t-if="record.state.raw_value == 'done' or record.state.raw_value == 'cancelled'" role="menuitem" type="object" name="action_reset_to_new" class="dropdown-item">Réinitialiser</a>
+                                            <a role="menuitem" type="object" name="action_send_email_notification" class="dropdown-item">Envoyer notification</a>
+                                            <a role="menuitem" type="object" name="action_create_followup_task" class="dropdown-item">Créer tâche de suivi</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-6 text-muted">
+                                            <span><i class="fa fa-calendar-o"/> <field name="date_deadline"/></span>
+                                        </div>
+                                        <!-- LIGNE CORRIGÉE - Remplacer < par &lt; -->
+                                        <div t-attf-class="col-6 #{record.days_remaining.raw_value &lt;= 0 ? 'text-danger font-weight-bold' : (record.days_remaining.raw_value &lt;= 7 ? 'text-warning' : '')}">
+                                            <span><i class="fa fa-clock-o"/> <field name="days_remaining"/> jours</span>
+                                        </div>
+                                    </div>
+                                    <div t-if="record.partner_id.raw_value" class="mt-2">
+                                        <span><i class="fa fa-user"/> <field name="partner_id"/></span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="priority" widget="priority"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <img t-att-src="kanban_image('res.users', 'avatar_128', record.assigned_to_id.raw_value)" 
+                                             t-att-title="record.assigned_to_id.value" width="24" height="24" 
+                                             class="oe_kanban_avatar" 
+                                             t-if="record.assigned_to_id.raw_value"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Vue formulaire des alertes -->
+    <record id="view_it_alert_form" model="ir.ui.view">
+        <field name="name">it.alert.form</field>
+        <field name="model">it.alert</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_mark_in_progress" string="Prendre en charge" type="object" 
+                            class="oe_highlight" invisible_if="state != 'new'"/>
+                    <button name="action_mark_done" string="Marquer comme traité" type="object" 
+                            class="oe_highlight" invisible_if="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Annuler" type="object" 
+                            invisible_if="state not in ('new', 'in_progress')"/>
+                    <button name="action_reset_to_new" string="Réinitialiser" type="object" 
+                            invisible_if="state not in ('done', 'cancelled')"/>
+                    <button name="action_send_email_notification" string="Envoyer notification" type="object" 
+                            icon="fa-envelope" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="new,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_create_followup_task" type="object" 
+                                string="Créer tâche de suivi" class="oe_stat_button" icon="fa-tasks"/>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Titre de l'alerte"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="alert_type"/>
+                            <field name="date_deadline"/>
+                            <field name="days_remaining"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="assigned_to_id"/>
+                            <field name="email_sent"/>
+                            <field name="email_sent_date" invisible_if="not email_sent"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Description de l'alerte..."/>
+                        </page>
+                        <page string="Éléments associés" name="related_items">
+                            <group>
+                                <field name="contract_id" invisible_if="alert_type != 'contract'"/>
+                                <field name="asset_id" invisible_if="alert_type not in ('warranty', 'maintenance')"/>
+                                <field name="software_id" invisible_if="alert_type != 'license'"/>
+                            </group>
+                        </page>
+                        <page string="Résolution" name="resolution">
+                            <group>
+                                <field name="treated_by_id"/>
+                                <field name="treated_date"/>
+                                <field name="action_taken"/>
+                                <field name="resolution_notes"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Vue recherche des alertes -->
+    <record id="view_it_alert_search" model="ir.ui.view">
+        <field name="name">it.alert.search</field>
+        <field name="model">it.alert</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="partner_id"/>
+                <field name="assigned_to_id"/>
+                <filter string="Mes alertes" name="my_alerts" domain="[('assigned_to_id', '=', uid)]"/>
+                <filter string="Non assignées" name="unassigned" domain="[('assigned_to_id', '=', False)]"/>
+                <filter string="Nouvelles" name="new" domain="[('state', '=', 'new')]"/>
+                <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Traitées" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Critiques" name="critical_priority" domain="[('priority', '=', '3')]"/>
+                <filter string="Urgentes" name="urgent_priority" domain="[('priority', '=', '2')]"/>
+                <filter string="À échéance immédiate" name="immediate" domain="[('days_remaining', '&lt;=', 7)]"/>
+                <separator/>
+                <filter string="Contrats" name="contract_type" domain="[('alert_type', '=', 'contract')]"/>
+                <filter string="Garanties" name="warranty_type" domain="[('alert_type', '=', 'warranty')]"/>
+                <filter string="Licences" name="license_type" domain="[('alert_type', '=', 'license')]"/>
+                <filter string="Maintenances" name="maintenance_type" domain="[('alert_type', '=', 'maintenance')]"/>
+                <group expand="0" string="Grouper Par">
+                    <filter string="Type d'alerte" name="group_by_type" context="{'group_by': 'alert_type'}"/>
+                    <filter string="Statut" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Priorité" name="group_by_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="Date limite" name="group_by_deadline" context="{'group_by': 'date_deadline:month'}"/>
+                    <filter string="Assigné à" name="group_by_assigned" context="{'group_by': 'assigned_to_id'}"/>
+                    <filter string="Client" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action alertes -->
+    <record id="action_it_alert" model="ir.actions.act_window">
+        <field name="name">Alertes IT</field>
+        <field name="res_model">it.alert</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_new': 1, 'search_default_in_progress': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune alerte pour le moment!
+            </p>
+            <p>
+                Les alertes sont générées automatiquement lorsque des contrats, des garanties ou des licences
+                approchent de leur date d'expiration, ou lorsque des maintenances préventives doivent être planifiées.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Menu Alertes - Corriger la référence au menu parent -->
+    <menuitem id="menu_it_alert" 
+              name="Alertes" 
+              parent="menu_it_parc_root" 
+              action="action_it_alert" 
+              sequence="5"/>
+</odoo>

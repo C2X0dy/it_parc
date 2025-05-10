@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_it_asset_form" model="ir.ui.view">
+        <field name="name">it.asset.form</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="asset_type"/>
+                        <field name="serial_number"/>
+                        <field name="partner_id"/>
+                        <field name="user_id"/>
+                        <field name="purchase_date"/>
+                        <field name="warranty_end"/>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View -->
+    <record id="view_it_asset_tree" model="ir.ui.view">
+        <field name="name">it.asset.list</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="asset_type"/>
+                <field name="serial_number"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Corriger cette vue en remplaçant tree par list -->
+    <record id="view_it_asset_test_tree" model="ir.ui.view">
+        <field name="name">it.asset.test.list</field>
+        <field name="model">it.asset.test</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="asset_type"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_it_asset_test" model="ir.actions.act_window">
+        <field name="name">IT Assets Test</field>
+        <field name="res_model">it.asset.test</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_it_asset_test_root" 
+              name="IT Assets Test" 
+              sequence="10"/>
+
+    <menuitem id="menu_it_asset_test" 
+              name="Assets"
+              parent="menu_it_asset_test_root" 
+              action="action_it_asset_test" 
+              sequence="10"/>
+</odoo>

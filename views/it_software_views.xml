@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action seulement -->
+    <record id="action_it_software" model="ir.actions.act_window">
+        <field name="name">Software</field>
+        <field name="res_model">it.software</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_it_software" 
+              name="Software"
+              parent="menu_it_parc_root" 
+              action="action_it_software" 
+              sequence="20"/>
+</odoo>

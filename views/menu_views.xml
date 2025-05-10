@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action Tableau de bord - Correction du modèle -->
+    <record id="action_it_parc_dashboard" model="ir.actions.act_window">
+        <field name="name">Tableau de bord</field>
+        <field name="res_model">it.dashboard</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_it_dashboard_kanban"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_neutral_face">
+                Chargement du tableau de bord...
+            </p>
+        </field>
+    </record>
+
+    <!-- Action Equipements -->
+    <record id="action_it_asset" model="ir.actions.act_window">
+        <field name="name">IT Assets</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first IT asset
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu principal - Pointe maintenant vers le tableau de bord -->
+    <menuitem id="menu_it_parc_root" 
+              name="Parc Informatique" 
+              web_icon="it_parc,static/description/icon.png" 
+              action="action_it_parc_dashboard"
+              sequence="10"/>
+
+    <!-- Menu Tableau de bord -->
+    <menuitem id="menu_it_dashboard"
+              name="Tableau de bord"
+              parent="menu_it_parc_root"
+              action="action_it_parc_dashboard"
+              sequence="5"/>
+
+    <!-- Menu Equipements -->
+    <menuitem id="menu_it_asset" 
+              name="Equipements"
+              parent="menu_it_parc_root" 
+              action="action_it_asset" 
+              sequence="10"/>
+
+    <!-- Ajouter ceci après le menu Equipements -->
+    <menuitem id="menu_it_contract" 
+              name="Contrats"
+              parent="menu_it_parc_root" 
+              action="action_it_contract" 
+              sequence="20"/>
+
+    <!-- Ajouter après le menu Contracts -->
+    <menuitem id="menu_it_intervention" 
+              name="Interventions"
+              parent="menu_it_parc_root" 
+              action="action_it_intervention" 
+              sequence="30"/>
+
+    <menuitem id="menu_it_technician_planning" 
+              name="Planning techniciens"
+              parent="menu_it_parc_root" 
+              action="action_it_technician_planning" 
+              sequence="35"/>
+</odoo>

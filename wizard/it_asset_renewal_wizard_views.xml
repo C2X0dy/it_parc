@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_it_asset_renewal_wizard_form" model="ir.ui.view">
+        <field name="name">it.asset.renewal.wizard.form</field>
+        <field name="model">it.asset.renewal.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Planification des Renouvellements</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="priority"/>
+                            <field name="partner_id"/>
+                        </group>
+                    </group>
+                    
+                    <field name="asset_ids" widget="many2many">
+                        <list>
+                            <field name="name"/>
+                            <field name="asset_type"/>
+                            <field name="partner_id"/>
+                            <field name="age_in_months"/>
+                            <field name="depreciation_percentage" widget="percentage"/>
+                            <field name="recommended_renewal_date"/>
+                            <field name="renewal_priority"/>
+                        </list>
+                    </field>
+                    
+                    <footer>
+                        <button name="action_generate_renewal_requests" string="Générer les demandes" type="object" 
+                                class="btn-primary" icon="fa-cogs"/>
+                        <button string="Annuler" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_it_asset_renewal_wizard" model="ir.actions.act_window">
+        <field name="name">Assistant de Renouvellement</field>
+        <field name="res_model">it.asset.renewal.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

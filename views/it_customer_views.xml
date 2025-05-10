@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire du client IT -->
+    <record id="view_it_customer_form" model="ir.ui.view">
+        <field name="name">it.customer.form</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_satisfaction_survey" string="Envoyer une enquête de satisfaction" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_assets" type="object" class="oe_stat_button" icon="fa-laptop">
+                            <field name="asset_count" widget="statinfo" string="Équipements"/>
+                        </button>
+                        <button name="action_view_contracts" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="contract_count" widget="statinfo" string="Contrats"/>
+                        </button>
+                        <button name="action_view_tickets" type="object" class="oe_stat_button" icon="fa-ticket">
+                            <field name="ticket_count" widget="statinfo" string="Tickets"/>
+                        </button>
+                        <button name="action_view_interventions" type="object" class="oe_stat_button" icon="fa-wrench">
+                            <field name="intervention_count" widget="statinfo" string="Interventions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nom du client"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="industry_id"/>
+                            <field name="company_size"/>
+                            <field name="strategic_importance" widget="priority"/>
+                            <field name="customer_since"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="last_interaction_date"/>
+                            <field name="satisfaction_rate" widget="percentpie"/>
+                            <field name="revenue_ytd"/>
+                            <field name="revenue_last_year"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Contacts" name="contacts">
+                            <group>
+                                <field name="technical_contact_ids" widget="many2many_tags"/>
+                                <field name="administrative_contact_ids" widget="many2many_tags"/>
+                                <field name="management_contact_ids" widget="many2many_tags"/>
+                                <field name="accounting_contact_ids" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="SLA et disponibilité" name="sla">
+                            <group>
+                                <group string="SLA">
+                                    <field name="sla_response_time"/>
+                                    <field name="sla_resolution_time"/>
+                                    <field name="availability_rate"/>
+                                </group>
+                                <group string="Heures d'ouverture">
+                                    <field name="business_hours_start" widget="float_time"/>
+                                    <field name="business_hours_end" widget="float_time"/>
+                                </group>
+                            </group>
+                            <group string="Jours ouvrés">
+                                <field name="work_on_monday"/>
+                                <field name="work_on_tuesday"/>
+                                <field name="work_on_wednesday"/>
+                                <field name="work_on_thursday"/>
+                                <field name="work_on_friday"/>
+                                <field name="work_on_saturday"/>
+                                <field name="work_on_sunday"/>
+                            </group>
+                        </page>
+                        <page string="Environnement technique" name="technical">
+                            <group>
+                                <field name="network_infrastructure" placeholder="Description de l'infrastructure réseau..." nolabel="1"/>
+                            </group>
+                            <group>
+                                <field name="server_environment" placeholder="Description de l'environnement serveurs..." nolabel="1"/>
+                            </group>
+                            <group>
+                                <field name="security_specifics" placeholder="Spécificités de sécurité..." nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Opportunités" name="opportunities">
+                            <field name="opportunity_ids" context="{'tree_view_ref': 'it_parc.view_it_customer_opportunity_list'}"/>
+                        </page>
+                        <page string="Documents" name="documents">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste des clients IT - Renommer tree en list -->
+    <record id="view_it_customer_list" model="ir.ui.view">
+        <field name="name">it.customer.list</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="inactivity_alert == True" decoration-warning="contract_renewal_alert == True">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="company_size"/>
+                <field name="strategic_importance"/>
+                <field name="last_interaction_date"/>
+                <field name="satisfaction_rate" widget="percentage"/>
+                <field name="revenue_ytd" sum="Total CA"/>
+                <field name="inactivity_alert" invisible="1"/>
+                <field name="contract_renewal_alert" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue kanban des clients IT -->
+    <record id="view_it_customer_kanban" model="ir.ui.view">
+        <field name="name">it.customer.kanban</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="strategic_importance" class="o_it_customer_kanban">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="strategic_importance"/>
+                <field name="last_interaction_date"/>
+                <field name="satisfaction_rate"/>
+                <field name="revenue_ytd"/>
+                <field name="asset_count"/>
+                <field name="contract_count"/>
+                <field name="ticket_count"/>
+                <field name="inactivity_alert"/>
+                <field name="contract_renewal_alert"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click o_kanban_record_has_image_fill #{record.inactivity_alert.raw_value ? 'bg-danger-light' : ''} #{record.contract_renewal_alert.raw_value ? 'bg-warning-light' : ''}">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <span class="o_kanban_record_subtitle">
+                                        <field name="partner_id"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div>
+                                    <strong>CA:</strong> <field name="revenue_ytd"/>
+                                </div>
+                                <div>
+                                    <strong>Satisfaction:</strong> <field name="satisfaction_rate" widget="progressbar"/>
+                                </div>
+                                <div class="o_kanban_badges">
+                                    <span t-if="record.inactivity_alert.raw_value" class="badge badge-danger">
+                                        <i class="fa fa-exclamation-circle"/> Inactivité
+                                    </span>
+                                    <span t-if="record.contract_renewal_alert.raw_value" class="badge badge-warning">
+                                        <i class="fa fa-calendar"/> Renouvellement
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.asset_count.raw_value > 0" class="badge badge-primary">
+                                        <i class="fa fa-laptop"/> <t t-esc="record.asset_count.raw_value"/>
+                                    </span>
+                                    <span t-if="record.contract_count.raw_value > 0" class="badge badge-success">
+                                        <i class="fa fa-file-text-o"/> <t t-esc="record.contract_count.raw_value"/>
+                                    </span>
+                                    <span t-if="record.ticket_count.raw_value > 0" class="badge badge-info">
+                                        <i class="fa fa-ticket"/> <t t-esc="record.ticket_count.raw_value"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue de recherche -->
+    <record id="view_it_customer_search" model="ir.ui.view">
+        <field name="name">it.customer.search</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="industry_id"/>
+                <separator/>
+                <filter string="Alerte inactivité" name="inactivity_alert" domain="[('inactivity_alert', '=', True)]"/>
+                <filter string="Alerte renouvellement" name="contract_renewal_alert" domain="[('contract_renewal_alert', '=', True)]"/>
+                <separator/>
+                <filter string="Haute importance" name="high_importance" domain="[('strategic_importance', 'in', ['high', 'critical'])]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Importance" name="group_by_importance" context="{'group_by': 'strategic_importance'}"/>
+                    <filter string="Taille" name="group_by_size" context="{'group_by': 'company_size'}"/>
+                    <filter string="Secteur" name="group_by_industry" context="{'group_by': 'industry_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Vue pivot pour l'analyse -->
+    <record id="view_it_customer_pivot" model="ir.ui.view">
+        <field name="name">it.customer.pivot</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="strategic_importance" type="row"/>
+                <field name="company_size" type="row"/>
+                <field name="revenue_ytd" type="measure"/>
+                <field name="satisfaction_rate" type="measure"/>
+                <field name="asset_count" type="measure"/>
+                <field name="contract_count" type="measure"/>
+                <field name="ticket_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Commentez ou supprimez la vue dashboard qui n'est plus supportée dans Odoo 18.0 -->
+    <!--
+    <record id="view_it_customer_dashboard" model="ir.ui.view">
+        <field name="name">it.customer.dashboard</field>
+        <field name="model">it.customer</field>
+        <field name="arch" type="xml">
+            <dashboard>
+                <view type="graph" ref="view_it_customer_pivot"/>
+                <group>
+                    <aggregate name="total_revenue" field="revenue_ytd" string="CA total" widget="monetary"/>
+                    <aggregate name="avg_satisfaction" field="satisfaction_rate" string="Satisfaction moyenne" widget="percentage"/>
+                    <aggregate name="total_assets" field="asset_count" string="Total équipements"/>
+                    <aggregate name="total_contracts" field="contract_count" string="Total contrats"/>
+                </group>
+                <view type="pivot" ref="view_it_customer_pivot"/>
+            </dashboard>
+        </field>
+    </record>
+    -->
+
+    <!-- Vue calendrier pour les échéances -->
+    <record id="view_it_customer_calendar" model="ir.ui.view">
+        <field name="name">it.customer.calendar</field>
+        <field name="model">it.contract</field>
+        <field name="arch" type="xml">
+            <calendar string="Échéances contrats" date_start="end_date" color="partner_id" mode="month">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="amount"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue d'opportunité formulaire -->
+    <record id="view_it_customer_opportunity_form" model="ir.ui.view">
+        <field name="name">it.customer.opportunity.form</field>
+        <field name="model">it.customer.opportunity</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_qualify" string="Qualifier" type="object" 
+                            invisible_if="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_create_proposal" string="Créer proposition" type="object" 
+                            invisible_if="state != 'qualified'" class="oe_highlight"/>
+                    <button name="action_mark_won" string="Marquer comme gagnée" type="object" 
+                            invisible_if="state != 'proposal'" class="oe_highlight"/>
+                    <button name="action_mark_lost" string="Marquer comme perdue" type="object" 
+                            invisible_if="state not in ('draft', 'qualified', 'proposal')" class="btn-danger"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,qualified,proposal,won,lost"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Titre de l'opportunité"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="customer_id"/>
+                            <field name="type"/>
+                            <field name="detection_date"/>
+                            <field name="expected_closing"/>
+                        </group>
+                        <group>
+                            <field name="estimated_revenue"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="probability" widget="percentage"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Détails de l'opportunité détectée..." nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue d'opportunité liste -->
+    <record id="view_it_customer_opportunity_list" model="ir.ui.view">
+        <field name="name">it.customer.opportunity.list</field>
+        <field name="model">it.customer.opportunity</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'won'" decoration-danger="state == 'lost'" decoration-warning="state == 'proposal'" decoration-info="state == 'qualified'">
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="type"/>
+                <field name="estimated_revenue" sum="Total"/>
+                <field name="probability" widget="percentage"/>
+                <field name="detection_date"/>
+                <field name="expected_closing"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue de recherche d'opportunité -->
+    <record id="view_it_customer_opportunity_search" model="ir.ui.view">
+        <field name="name">it.customer.opportunity.search</field>
+        <field name="model">it.customer.opportunity</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="customer_id"/>
+                <field name="type"/>
+                <separator/>
+                <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Qualifiée" name="qualified" domain="[('state', '=', 'qualified')]"/>
+                <filter string="Proposition" name="proposal" domain="[('state', '=', 'proposal')]"/>
+                <filter string="Gagnée" name="won" domain="[('state', '=', 'won')]"/>
+                <filter string="Perdue" name="lost" domain="[('state', '=', 'lost')]"/>
+                <separator/>
+                <filter string="Forte probabilité" name="high_probability" domain="[('probability', '>=', 70)]"/>
+                <filter string="CA élevé" name="high_revenue" domain="[('estimated_revenue', '>=', 10000)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Client" name="group_by_customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Type" name="group_by_type" context="{'group_by': 'type'}"/>
+                    <filter string="État" name="group_by_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_it_customer" model="ir.actions.act_window">
+        <field name="name">Clients IT</field>
+        <field name="res_model">it.customer</field>
+        <!-- Assurez-vous que "dashboard" n'est pas inclus dans view_mode -->
+        <field name="view_mode">kanban,list,form,pivot</field>
+    </record>
+
+    <record id="action_it_customer_opportunity" model="ir.actions.act_window">
+        <field name="name">Opportunités</field>
+        <field name="res_model">it.customer.opportunity</field>
+        <field name="view_mode">list,form</field>
+        <!-- Utiliser "list" au lieu de "tree" -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première opportunité !
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_it_customer" 
+              name="Clients IT"
+              parent="menu_it_parc_root" 
+              action="action_it_customer" 
+              sequence="15"/>
+
+    <menuitem id="menu_it_customer_opportunity" 
+              name="Opportunités"
+              parent="menu_it_parc_root" 
+              action="action_it_customer_opportunity" 
+              sequence="16"/>
+</odoo>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue liste des lignes d'amortissement -->
+    <record id="view_it_asset_depreciation_list" model="ir.ui.view">
+        <field name="name">it.asset.depreciation.list</field>
+        <field name="model">it.asset.depreciation</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="asset_id"/>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="depreciation_value"/>
+                <field name="remaining_value"/>
+                <field name="move_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue form des lignes d'amortissement -->
+    <record id="view_it_asset_depreciation_form" model="ir.ui.view">
+        <field name="name">it.asset.depreciation.form</field>
+        <field name="model">it.asset.depreciation</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="asset_id"/>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="depreciation_value"/>
+                            <field name="remaining_value"/>
+                            <field name="move_id"/>
+                            <field name="account_analytic_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Extension de la vue form des équipements -->
+    <record id="view_it_asset_form_depreciation" model="ir.ui.view">
+        <field name="name">it.asset.form.depreciation</field>
+        <field name="model">it.asset</field>
+        <field name="inherit_id" ref="it_parc.view_it_asset_form"/>
+        <field name="arch" type="xml">
+            <sheet position="inside">
+                <notebook>
+                    <page string="Amortissement" name="depreciation">
+                        <group>
+                            <group>
+                                <field name="depreciation_method"/>
+                                <field name="depreciation_years"/>
+                                <field name="depreciation_rate"/>
+                                <field name="depreciation_start_date"/>
+                                <field name="salvage_value"/>
+                            </group>
+                            <group>
+                                <field name="age_in_months"/>
+                                <field name="depreciation_value" widget="monetary"/>
+                                <field name="depreciation_percentage" widget="percentage"/>
+                                <field name="current_value" widget="monetary"/>
+                                <button name="compute_depreciation_board" string="Calculer l'amortissement" type="object" class="oe_highlight"/>
+                                <button name="open_depreciation_board" string="Voir le tableau" type="object" class="btn-secondary"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Comptabilité">
+                            <field name="account_asset_id"/>
+                            <field name="account_depreciation_id"/>
+                            <field name="account_expense_id"/>
+                            <field name="journal_id"/>
+                        </group>
+
+                        <group string="Renouvellement">
+                            <field name="recommended_renewal_date"/>
+                            <field name="renewal_priority"/>
+                            <field name="renewal_planned"/>
+                            <field name="renewal_date" invisible_if="not renewal_planned"/>
+                            <field name="renewal_notes" invisible_if="not renewal_planned"/>
+                            <button name="action_generate_renewal_request" string="Demander un renouvellement" type="object" 
+                                    class="btn-primary" invisible_if="renewal_planned"/>
+                                    
+                        </group>
+                    </page>
+                </notebook>
+            </sheet>
+        </field>
+    </record>
+
+    <!-- Liste des équipements à renouveller -->
+    <record id="view_it_asset_renewal_list" model="ir.ui.view">
+        <field name="name">it.asset.renewal.list</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="asset_type"/>
+                <field name="partner_id"/>
+                <field name="purchase_date"/>
+                <field name="age_in_months"/>
+                <field name="purchase_value"/>
+                <field name="current_value"/>
+                <field name="depreciation_percentage" widget="percentage"/>
+                <field name="recommended_renewal_date"/>
+                <field name="renewal_priority" decoration-danger="renewal_priority == 'critical'" 
+                              decoration-warning="renewal_priority == 'high'"
+                              decoration-info="renewal_priority == 'medium'"
+                              decoration-success="renewal_priority == 'low'"/>
+                <field name="renewal_planned"/>
+                <button name="action_generate_renewal_request" string="Demander un renouvellement" 
+                        type="object" icon="fa-refresh" 
+                        invisible="renewal_planned"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue de l'assistant de planification des renouvellements -->
+    <record id="view_it_asset_renewal_wizard_form" model="ir.ui.view">
+        <field name="name">it.asset.renewal.wizard.form</field>
+        <field name="model">it.asset.renewal.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Planification des Renouvellements</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="priority"/>
+                            <field name="partner_id"/>
+                        </group>
+                    </group>
+                    
+                    <field name="asset_ids" widget="many2many">
+                        <list>
+                            <field name="name"/>
+                            <field name="asset_type"/>
+                            <field name="partner_id"/>
+                            <field name="age_in_months"/>
+                            <field name="depreciation_percentage" widget="percentage"/>
+                            <field name="recommended_renewal_date"/>
+                            <field name="renewal_priority"/>
+                        </list>
+                    </field>
+                    
+                    <footer>
+                        <button name="action_generate_renewal_requests" string="Générer les demandes" type="object" 
+                                class="btn-primary" icon="fa-cogs"/>
+                        <button string="Annuler" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_it_asset_depreciation" model="ir.actions.act_window">
+        <field name="name">Amortissements</field>
+        <field name="res_model">it.asset.depreciation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    
+    <record id="action_it_asset_renewal" model="ir.actions.act_window">
+        <field name="name">Planification des renouvellements</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_it_asset_renewal_list"/>
+        <field name="domain">[('recommended_renewal_date', '!=', False)]</field>
+    </record>
+    
+    <record id="action_it_asset_renewal_wizard" model="ir.actions.act_window">
+        <field name="name">Assistant de Renouvellement</field>
+        <field name="res_model">it.asset.renewal.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menus -->
+    <menuitem id="menu_it_asset_depreciation" 
+              name="Amortissements"
+              parent="menu_it_asset" 
+              action="action_it_asset_depreciation" 
+              sequence="10"/>
+              
+    <menuitem id="menu_it_asset_renewal" 
+              name="Renouvellements"
+              parent="menu_it_asset" 
+              action="action_it_asset_renewal" 
+              sequence="20"/>
+              
+    <menuitem id="menu_it_asset_renewal_wizard" 
+              name="Planifier des renouvellements"
+              parent="menu_it_asset" 
+              action="action_it_asset_renewal_wizard" 
+              sequence="30"/>
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_it_customer_satisfaction_wizard_form" model="ir.ui.view">
+        <field name="name">it.customer.satisfaction.wizard.form</field>
+        <field name="model">it.customer.satisfaction.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="customer_id" readonly="1"/>
+                        <field name="template_id"/>
+                        <field name="subject"/>
+                    </group>
+                    <field name="body"/>
+                </sheet>
+                <footer>
+                    <button name="action_send_survey" string="Envoyer" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

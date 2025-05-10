@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Template email pour les factures de contrat IT -->
+        <record id="email_template_it_contract_invoice" model="mail.template">
+            <field name="name">IT Parc: Facture de contrat</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="subject">{{ object.company_id.name }}: Facture {{ object.name }}</field>
+            <field name="email_from">{{ (user.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Cher <t t-out="object.partner_id.name or ''"/>,
+        <br/><br/>
+        Veuillez trouver ci-joint votre facture <strong t-out="object.name or ''"/> 
+        {% if object.contract_id %}
+        relative à votre contrat de maintenance <strong t-out="object.contract_id.name or ''"/>
+        {% endif %}
+        d'un montant de <strong t-out="format_amount(object.amount_total, object.currency_id)"/>.
+        <br/><br/>
+        Cette facture couvre la période du <t t-out="context_timestamp(datetime.date.today()).strftime('%d/%m/%Y')"/> au <t t-out="context_timestamp(datetime.date.today() + relativedelta(months=1)).strftime('%d/%m/%Y')"/>.
+        <br/><br/>
+        {% if object.payment_state != 'paid' %}
+            <p>Vous pouvez procéder au paiement via notre portail client.</p>
+        {% else %}
+            <p>Cette facture a été réglée. Merci de votre confiance.</p>
+        {% endif %}
+        <br/>
+        Cordialement,
+        <br/>
+        L'équipe IT Support
+    </p>
+</div>
+            </field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>
